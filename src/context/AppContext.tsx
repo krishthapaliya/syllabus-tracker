@@ -7,7 +7,7 @@ import { Locale, TRANSLATIONS, TranslationKey } from '@/lib/i18n';
 export type ThemeMode = 'light' | 'dark';
 export type ColorTheme = 'indigo' | 'emerald' | 'rose' | 'amber';
 
-const API_URL = 'http://127.0.0.1:8000/api';
+const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://127.0.0.1:8000/api';
 
 interface AppContextType {
   // Data
