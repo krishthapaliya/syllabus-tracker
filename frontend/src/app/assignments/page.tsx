@@ -49,7 +49,7 @@ export default function AssignmentsPage() {
     }
 
     if (editAsg) {
-      updateAssignment(editAsg.id, formData);
+      updateAssignment(editAsg.id, data);
       setToast({ msg: 'Assignment updated.', type: 'success' });
     } else {
       addAssignment(data);

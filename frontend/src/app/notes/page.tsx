@@ -46,7 +46,7 @@ export default function NotesPage() {
     }
 
     if (editNote) {
-      updateNote(editNote.id, formData); // Update typically doesn't handle files here for simplicity, or we can improve later
+      updateNote(editNote.id, data);
       setToast({ msg: 'Note updated successfully.', type: 'success' });
     } else {
       addNote(data);
@@ -141,10 +141,10 @@ export default function NotesPage() {
                   
                   {/* Actions Dropdown inside Group */}
                   <div className="opacity-0 group-hover:opacity-100 transition-opacity flex items-center gap-1">
-                    <button onClick={() => openEdit(n)} className="w-7 h-7 rounded bg-surface-input hover:bg-surface-body text-content-muted hover:text-brand-500 transition-colors flex items-center justify-center">
+                    <button onClick={() => openEdit(note)} className="w-7 h-7 rounded bg-surface-input hover:bg-surface-body text-content-muted hover:text-brand-500 transition-colors flex items-center justify-center">
                       <i className="fas fa-pen text-xs" />
                     </button>
-                    <button onClick={() => setDelId(n.id)} className="w-7 h-7 rounded bg-surface-input hover:bg-red-500/10 text-content-muted hover:text-red-500 transition-colors flex items-center justify-center">
+                    <button onClick={() => setDelId(note.id)} className="w-7 h-7 rounded bg-surface-input hover:bg-red-500/10 text-content-muted hover:text-red-500 transition-colors flex items-center justify-center">
                       <i className="fas fa-trash text-xs" />
                     </button>
                   </div>
@@ -154,23 +154,23 @@ export default function NotesPage() {
                   <span className="inline-block px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-wide mb-1.5" style={{ background: (sub?.color || '#6366f1') + '20', color: sub?.color || '#6366f1' }}>
                     {sub?.name || 'Unknown'}
                   </span>
-                  <h3 className="font-bold text-content-main leading-snug line-clamp-2" title={n.title}>{n.title}</h3>
+                  <h3 className="font-bold text-content-main leading-snug line-clamp-2" title={note.title}>{note.title}</h3>
                 </div>
 
-                {n.chapter && <p className="text-xs text-content-muted font-medium mb-3">Chapter: {n.chapter}</p>}
-                {n.description && <p className="text-xs text-content-muted line-clamp-2 mb-4 flex-1">{n.description}</p>}
-                {!n.description && <div className="flex-1" />}
+                {note.chapter && <p className="text-xs text-content-muted font-medium mb-3">Chapter: {note.chapter}</p>}
+                {note.description && <p className="text-xs text-content-muted line-clamp-2 mb-4 flex-1">{note.description}</p>}
+                {!note.description && <div className="flex-1" />}
 
                 <div className="mt-4 pt-4 border-t border-boundary-subtle flex items-center justify-between text-xs text-content-muted">
-                  <span>{formatDate(n.createdAt)}</span>
+                  <span>{formatDate(note.createdAt)}</span>
                   <div className="flex gap-3">
-                    {n.file && (
-                      <a href={n.file} target="_blank" rel="noopener noreferrer" className="text-emerald-500 hover:text-emerald-600 font-semibold flex items-center gap-1.5 transition-colors">
+                    {note.file && (
+                      <a href={note.file} target="_blank" rel="noopener noreferrer" className="text-emerald-500 hover:text-emerald-600 font-semibold flex items-center gap-1.5 transition-colors">
                         Attachment <i className="fas fa-file-download" />
                       </a>
                     )}
-                    {n.link && (
-                      <a href={n.link} target="_blank" rel="noopener noreferrer" className="text-brand-500 hover:text-brand-600 font-semibold flex items-center gap-1.5 transition-colors">
+                    {note.link && (
+                      <a href={note.link} target="_blank" rel="noopener noreferrer" className="text-brand-500 hover:text-brand-600 font-semibold flex items-center gap-1.5 transition-colors">
                         Link <i className="fas fa-external-link-alt" />
                       </a>
                     )}

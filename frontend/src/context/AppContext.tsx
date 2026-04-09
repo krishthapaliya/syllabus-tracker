@@ -20,11 +20,11 @@ interface AppContextType {
   // Data Actions
   addSubject: (data: Omit<Subject, 'id' | 'createdAt'>) => Promise<void>;
   deleteSubject: (id: string) => Promise<void>;
-  addNote: (data: Omit<Note, 'id' | 'createdAt'>) => Promise<void>;
-  updateNote: (id: string, data: Partial<Note>) => Promise<void>;
+  addNote: (data: any) => Promise<void>;
+  updateNote: (id: string, data: any) => Promise<void>;
   deleteNote: (id: string) => Promise<void>;
-  addAssignment: (data: Omit<Assignment, 'id' | 'createdAt'>) => Promise<void>;
-  updateAssignment: (id: string, data: Partial<Assignment>) => Promise<void>;
+  addAssignment: (data: any) => Promise<void>;
+  updateAssignment: (id: string, data: any) => Promise<void>;
   deleteAssignment: (id: string) => Promise<void>;
   addExam: (data: Omit<Exam, 'id' | 'createdAt'>) => Promise<void>;
   updateExam: (id: string, data: Partial<Exam>) => Promise<void>;

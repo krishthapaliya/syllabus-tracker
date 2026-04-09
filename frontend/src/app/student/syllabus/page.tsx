@@ -2,7 +2,6 @@
 
 import React, { useState } from 'react';
 import { useApp } from '@/context/AppContext';
-import Topbar from '@/components/Topbar';
 import Modal from '@/components/Modal';
 import { SyllabusTopic } from '@/lib/types';
 
@@ -15,11 +14,6 @@ export default function StudentSyllabusPage() {
 
   return (
     <div className="min-h-screen bg-surface-body pb-20">
-      <Topbar 
-        title={t('nav.syllabus' as any) || 'Syllabus Tracker'} 
-        subtitle="Track your academic progress semester-wise" 
-      />
-
       <main className="max-w-7xl mx-auto px-6 mt-8 animate-fade-in">
         {/* Semester Tabs */}
         <div className="flex items-center gap-2 mb-8 p-1.5 bg-surface-card/50 backdrop-blur-md rounded-full w-fit border border-boundary-subtle">
@@ -133,6 +127,7 @@ export default function StudentSyllabusPage() {
       </main>
 
       <Modal 
+        id="topic-view-modal"
         isOpen={!!viewingTopic} 
         onClose={() => setViewingTopic(null)} 
         title="Topic Details"

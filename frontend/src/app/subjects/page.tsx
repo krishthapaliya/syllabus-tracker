@@ -2,7 +2,6 @@
 
 import React, { useState } from 'react';
 import { useApp } from '@/context/AppContext';
-import Topbar from '@/components/Topbar';
 import Modal from '@/components/Modal';
 import { Subject } from '@/lib/types';
 
@@ -38,11 +37,6 @@ export default function SubjectsPage() {
 
   return (
     <div className="min-h-screen bg-surface-body pb-20">
-      <Topbar 
-        title={t('nav.subjects' as any) || 'Course Management'} 
-        subtitle="Organize your academic subjects and faculty" 
-      />
-
       <main className="max-w-7xl mx-auto px-6 mt-8">
         <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-6 mb-8">
           <div className="space-y-4">
@@ -129,7 +123,7 @@ export default function SubjectsPage() {
         </div>
       </main>
 
-      <Modal isOpen={isModalOpen} onClose={() => setIsModalOpen(false)} title="New Subject Registration">
+      <Modal id="subject-modal" isOpen={isModalOpen} onClose={() => setIsModalOpen(false)} title="New Subject Registration">
         <form onSubmit={handleSubmit} className="space-y-4">
           <div className="grid grid-cols-2 gap-4">
             <div className="col-span-2 md:col-span-1">
