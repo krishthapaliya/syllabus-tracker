@@ -46,10 +46,3 @@ yarn-error.log*
 next-env.d.ts
 frontend/next-env.d.ts
 
-# backend
-backend/venv/
-backend/__pycache__/
-backend/*.pyc
-backend/db.sqlite3
-backend/media/
-

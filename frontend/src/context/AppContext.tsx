@@ -3,11 +3,24 @@
 import React, { createContext, useContext, useEffect, useState, useCallback } from 'react';
 import { Subject, Note, Assignment, Exam, SyllabusTopic } from '@/lib/types';
 import { Locale, TRANSLATIONS, TranslationKey } from '@/lib/i18n';
+import { db, storage } from '@/lib/firebase';
+import { 
+  collection, 
+  getDocs, 
+  addDoc, 
+  updateDoc, 
+  deleteDoc, 
+  doc, 
+  query, 
+  orderBy,
+  serverTimestamp,
+  Timestamp
+} from 'firebase/firestore';
+import { ref, uploadBytes, getDownloadURL } from 'firebase/storage';
 
 export type ThemeMode = 'light' | 'dark';
 export type ColorTheme = 'indigo' | 'emerald' | 'rose' | 'amber';
 
-const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://127.0.0.1:8000/api';
 
 interface AppContextType {
   // Data
@@ -84,21 +97,27 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     // Fetch API Data
     const fetchData = async () => {
       try {
-        const [subRes, notRes, asgRes, exRes, sylRes] = await Promise.all([
-          fetch(`${API_URL}/subjects/`),
-          fetch(`${API_URL}/notes/`),
-          fetch(`${API_URL}/assignments/`),
-          fetch(`${API_URL}/exams/`),
-          fetch(`${API_URL}/syllabus/`)
-        ]);
+        const collections = ['subjects', 'notes', 'assignments', 'exams', 'syllabus'];
+        const results: any = {};
+
+        await Promise.all(collections.map(async (col) => {
+          const q = query(collection(db, col), orderBy('createdAt', 'desc'));
+          const snapshot = await getDocs(q);
+          results[col] = snapshot.docs.map(doc => ({
+            id: doc.id,
+            ...doc.data(),
+            // Convert Firestore timestamps to strings or Date objects as expected by UI
+            createdAt: doc.data().createdAt?.toDate()?.toISOString() || new Date().toISOString()
+          }));
+        }));
         
-        if (subRes.ok) setSubjects(await subRes.json());
-        if (notRes.ok) setNotes(await notRes.json());
-        if (asgRes.ok) setAssignments(await asgRes.json());
-        if (exRes.ok) setExams(await exRes.json());
-        if (sylRes.ok) setSyllabus(await sylRes.json());
+        setSubjects(results.subjects);
+        setNotes(results.notes);
+        setAssignments(results.assignments);
+        setExams(results.exams);
+        setSyllabus(results.syllabus);
       } catch (err) {
-        console.error("Failed to connect to Django Backend:", err);
+        console.error("Failed to connect to Firebase:", err);
       }
     };
     fetchData();
@@ -129,83 +148,152 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     return TRANSLATIONS[locale]?.[key] || TRANSLATIONS['en'][key] || key;
   }, [locale]);
 
-  // DB API Helpers
-  const apiCall = async (endpoint: string, method: string = 'GET', body: any = null) => {
-    const isFormData = body instanceof FormData;
-    const res = await fetch(`${API_URL}/${endpoint}/`, {
-      method,
-      headers: isFormData ? {} : { 'Content-Type': 'application/json' },
-      body: isFormData ? body : (body ? JSON.stringify(body) : undefined)
-    });
-    if (!res.ok) throw new Error(`API Error: ${res.statusText}`);
-    // DELETE typically doesn't return JSON
-    if (method === 'DELETE') return null;
-    return res.json();
+  // Helper for file uploads to Firebase Storage
+  const uploadFile = async (file: File, path: string) => {
+    const fileRef = ref(storage, `${path}/${Date.now()}_${file.name}`);
+    await uploadBytes(fileRef, file);
+    return getDownloadURL(fileRef);
   };
 
   // Subjects
   const addSubject = useCallback(async (data: Omit<Subject, 'id' | 'createdAt'>) => {
-    const newObj = await apiCall('subjects', 'POST', data);
-    setSubjects(prev => [newObj, ...prev]);
+    const docRef = await addDoc(collection(db, 'subjects'), {
+      ...data,
+      createdAt: serverTimestamp()
+    });
+    setSubjects(prev => [{ id: docRef.id, ...data, createdAt: new Date().toISOString() } as Subject, ...prev]);
   }, []);
+
   const deleteSubject = useCallback(async (id: string) => {
-    await apiCall(`subjects/${id}`, 'DELETE');
+    await deleteDoc(doc(db, 'subjects', id));
     setSubjects(prev => prev.filter(s => s.id !== id));
   }, []);
 
   // Notes
   const addNote = useCallback(async (data: any) => {
-    const newObj = await apiCall('notes', 'POST', data);
-    setNotes(prev => [newObj, ...prev]);
+    let fileUrl = null;
+    let finalData = { ...data };
+
+    if (data instanceof FormData) {
+      const file = data.get('file') as File;
+      if (file) {
+        fileUrl = await uploadFile(file, 'notes');
+      }
+      finalData = Object.fromEntries(data.entries());
+      delete finalData.file;
+      if (fileUrl) finalData.link = fileUrl;
+    }
+
+    const docRef = await addDoc(collection(db, 'notes'), {
+      ...finalData,
+      createdAt: serverTimestamp()
+    });
+    setNotes(prev => [{ id: docRef.id, ...finalData, createdAt: new Date().toISOString() } as Note, ...prev]);
   }, []);
-  const updateNote = useCallback(async (id: string, data: Partial<Note>) => {
-    const newObj = await apiCall(`notes/${id}`, 'PATCH', data);
-    setNotes(prev => prev.map(n => n.id === id ? newObj : n));
+
+  const updateNote = useCallback(async (id: string, data: any) => {
+    let finalData = { ...data };
+    if (data instanceof FormData) {
+      const file = data.get('file') as File;
+      if (file) {
+        const fileUrl = await uploadFile(file, 'notes');
+        finalData = Object.fromEntries(data.entries());
+        delete finalData.file;
+        finalData.link = fileUrl;
+      } else {
+        finalData = Object.fromEntries(data.entries());
+        delete finalData.file;
+      }
+    }
+    await updateDoc(doc(db, 'notes', id), finalData);
+    setNotes(prev => prev.map(n => n.id === id ? { ...n, ...finalData } : n));
   }, []);
+
   const deleteNote = useCallback(async (id: string) => {
-    await apiCall(`notes/${id}`, 'DELETE');
+    await deleteDoc(doc(db, 'notes', id));
     setNotes(prev => prev.filter(n => n.id !== id));
   }, []);
 
   // Assignments
   const addAssignment = useCallback(async (data: any) => {
-    const newObj = await apiCall('assignments', 'POST', data);
-    setAssignments(prev => [newObj, ...prev]);
+    let fileUrl = null;
+    let finalData = { ...data };
+
+    if (data instanceof FormData) {
+      const file = data.get('file') as File;
+      if (file) {
+        fileUrl = await uploadFile(file, 'assignments');
+      }
+      finalData = Object.fromEntries(data.entries());
+      delete finalData.file;
+      if (fileUrl) finalData.link = fileUrl;
+    }
+
+    const docRef = await addDoc(collection(db, 'assignments'), {
+      ...finalData,
+      createdAt: serverTimestamp()
+    });
+    setAssignments(prev => [{ id: docRef.id, ...finalData, createdAt: new Date().toISOString() } as Assignment, ...prev]);
   }, []);
-  const updateAssignment = useCallback(async (id: string, data: Partial<Assignment>) => {
-    const newObj = await apiCall(`assignments/${id}`, 'PATCH', data);
-    setAssignments(prev => prev.map(a => a.id === id ? newObj : a));
+
+  const updateAssignment = useCallback(async (id: string, data: any) => {
+    let finalData = { ...data };
+    if (data instanceof FormData) {
+      const file = data.get('file') as File;
+      if (file) {
+        const fileUrl = await uploadFile(file, 'assignments');
+        finalData = Object.fromEntries(data.entries());
+        delete finalData.file;
+        finalData.link = fileUrl;
+      } else {
+        finalData = Object.fromEntries(data.entries());
+        delete finalData.file;
+      }
+    }
+    await updateDoc(doc(db, 'assignments', id), finalData);
+    setAssignments(prev => prev.map(a => a.id === id ? { ...a, ...finalData } : a));
   }, []);
+
   const deleteAssignment = useCallback(async (id: string) => {
-    await apiCall(`assignments/${id}`, 'DELETE');
+    await deleteDoc(doc(db, 'assignments', id));
     setAssignments(prev => prev.filter(a => a.id !== id));
   }, []);
 
   // Exams
   const addExam = useCallback(async (data: Omit<Exam, 'id' | 'createdAt'>) => {
-    const newObj = await apiCall('exams', 'POST', data);
-    setExams(prev => [newObj, ...prev]);
+    const docRef = await addDoc(collection(db, 'exams'), {
+      ...data,
+      createdAt: serverTimestamp()
+    });
+    setExams(prev => [{ id: docRef.id, ...data, createdAt: new Date().toISOString() } as Exam, ...prev]);
   }, []);
+
   const updateExam = useCallback(async (id: string, data: Partial<Exam>) => {
-    const newObj = await apiCall(`exams/${id}`, 'PATCH', data);
-    setExams(prev => prev.map(e => e.id === id ? newObj : e));
+    await updateDoc(doc(db, 'exams', id), data);
+    setExams(prev => prev.map(e => e.id === id ? { ...e, ...data } : e));
   }, []);
+
   const deleteExam = useCallback(async (id: string) => {
-    await apiCall(`exams/${id}`, 'DELETE');
+    await deleteDoc(doc(db, 'exams', id));
     setExams(prev => prev.filter(e => e.id !== id));
   }, []);
 
   // Syllabus
   const addSyllabus = useCallback(async (data: Omit<SyllabusTopic, 'id' | 'createdAt'>) => {
-    const newObj = await apiCall('syllabus', 'POST', data);
-    setSyllabus(prev => [newObj, ...prev]);
+    const docRef = await addDoc(collection(db, 'syllabus'), {
+      ...data,
+      createdAt: serverTimestamp()
+    });
+    setSyllabus(prev => [{ id: docRef.id, ...data, createdAt: new Date().toISOString() } as SyllabusTopic, ...prev]);
   }, []);
+
   const updateSyllabus = useCallback(async (id: string, data: Partial<SyllabusTopic>) => {
-    const newObj = await apiCall(`syllabus/${id}`, 'PATCH', data);
-    setSyllabus(prev => prev.map(s => s.id === id ? newObj : s));
+    await updateDoc(doc(db, 'syllabus', id), data);
+    setSyllabus(prev => prev.map(s => s.id === id ? { ...s, ...data } : s));
   }, []);
+
   const deleteSyllabus = useCallback(async (id: string) => {
-    await apiCall(`syllabus/${id}`, 'DELETE');
+    await deleteDoc(doc(db, 'syllabus', id));
     setSyllabus(prev => prev.filter(s => s.id !== id));
   }, []);
 
