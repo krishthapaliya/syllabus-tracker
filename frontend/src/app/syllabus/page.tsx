@@ -88,6 +88,10 @@ export default function SyllabusPage() {
                         <div>
                           <span className="text-[10px] font-bold uppercase tracking-widest opacity-80">{subject.code}</span>
                           <h3 className="text-xl font-bold mt-1">{subject.name}</h3>
+                          <div className="flex gap-3 mt-1 opacity-80">
+                            <span className="text-[10px] font-bold uppercase"><i className="fas fa-clock mr-1" /> {subject.creditHours} Credits</span>
+                            <span className="text-[10px] font-bold uppercase"><i className="fas fa-star mr-1" /> {subject.fullMarks} Marks</span>
+                          </div>
                         </div>
                         <div className="bg-white/20 backdrop-blur-md rounded-xl px-3 py-1 text-xs font-bold">
                           {progressCount}% Complete

@@ -30,10 +30,12 @@ export default function StudentDashboardPage() {
     return { subject: s, total: topics.length, done, pct };
   }).filter(x => x.total > 0).slice(0, 4);
 
+  const totalCredits = subjects.reduce((acc, sub) => acc + (sub.creditHours || 0), 0);
+
   const stats = [
     { label: t('dashboard.totalNotes' as any) || 'Total Notes',       value: notes.length,       icon: 'fa-book-open',   color: 'from-blue-500 to-cyan-500',    glow: 'shadow-blue-500/20',  text: 'text-blue-500 dark:text-blue-400' },
+    { label: 'Total Credits', value: totalCredits, icon: 'fa-clock', color: 'from-indigo-500 to-blue-500', glow: 'shadow-indigo-500/20', text: 'text-indigo-500 dark:text-indigo-400' },
     { label: t('dashboard.upcomingAssignments' as any) || 'Upcoming Assgn', value: assignments.filter(a => getAssignmentStatus(a) !== 'overdue').length, icon: 'fa-tasks',        color: 'from-purple-500 to-indigo-500', glow: 'shadow-purple-500/20', text: 'text-purple-500 dark:text-purple-400' },
-    { label: t('dashboard.upcomingExams' as any) || 'Upcoming Exams',   value: exams.filter(e => isExamUpcoming(e)).length,       icon: 'fa-calendar-alt', color: 'from-orange-500 to-yellow-500', glow: 'shadow-orange-500/20', text: 'text-orange-500 dark:text-orange-400' },
     { label: t('dashboard.syllabusProgress' as any) || 'Syllabus Tracker',    value: syllabus.length,    icon: 'fa-list-check',   color: 'from-green-500 to-teal-500',   glow: 'shadow-green-500/20',  text: 'text-green-500 dark:text-green-400' },
   ];
 

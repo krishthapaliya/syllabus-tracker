@@ -5,6 +5,9 @@ export interface Subject {
   semester?: string;
   teacher?: string;
   color: string;
+  creditHours?: number;
+  fullMarks?: number;
+  passMarks?: number;
   createdAt: string;
 }
 

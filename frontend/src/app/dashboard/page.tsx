@@ -17,10 +17,12 @@ export default function Dashboard() {
   const filteredNotes = notes.filter(n => filteredSubjects.some(s => s.id === n.subjectId));
 
   // Aggregate Stats
+  const totalCredits = filteredSubjects.reduce((acc, sub) => acc + (sub.creditHours || 0), 0);
+  
   const stats = [
     { label: 'Total Subjects', value: filteredSubjects.length, icon: 'fa-book', color: 'bg-brand-500' },
+    { label: 'Total Credits', value: totalCredits, icon: 'fa-clock', color: 'bg-indigo-500' },
     { label: 'Pending Tasks', value: filteredAssignments.length, icon: 'fa-list-check', color: 'bg-amber-500' },
-    { label: 'Resource Files', value: filteredNotes.length, icon: 'fa-file-lines', color: 'bg-emerald-500' },
     { label: 'Course Progress', value: `${filteredSyllabus.length > 0 ? Math.round((filteredSyllabus.filter(t => t.status === 'completed').length / filteredSyllabus.length) * 100) : 0}%`, icon: 'fa-chart-line', color: 'bg-violet-500' }
   ];
 

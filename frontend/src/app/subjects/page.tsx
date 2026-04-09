@@ -13,7 +13,9 @@ export default function SubjectsPage() {
     code: '',
     semester: 'Semester 1',
     teacher: '',
-    color: '#6366f1'
+    color: '#6366f1',
+    creditHours: 3,
+    fullMarks: 75
   });
 
   const [activeSemester, setActiveSemester] = useState<string>('All');
@@ -32,7 +34,7 @@ export default function SubjectsPage() {
     e.preventDefault();
     await addSubject(formData);
     setIsModalOpen(false);
-    setFormData({ name: '', code: '', semester: 'Semester 1', teacher: '', color: '#6366f1' });
+    setFormData({ name: '', code: '', semester: 'Semester 1', teacher: '', color: '#6366f1', creditHours: 3, fullMarks: 75 });
   };
 
   return (
@@ -80,9 +82,19 @@ export default function SubjectsPage() {
                     </div>
 
                     <h3 className="text-lg font-bold text-content-main mb-1 group-hover:text-brand-500 transition-colors">{subject.name}</h3>
-                    <p className="text-sm text-content-muted mb-6 flex items-center gap-2">
+                    <p className="text-sm text-content-muted mb-4 flex items-center gap-2">
                        <i className="fas fa-user-tie text-[10px] opacity-60" /> {subject.teacher || 'Assign Teacher'}
                     </p>
+                    <div className="flex gap-4 mb-6 pt-4 border-t border-boundary-subtle/50">
+                      <div className="flex flex-col">
+                        <span className="text-[10px] font-bold text-content-muted uppercase">Credits</span>
+                        <span className="text-xs font-bold text-content-main">{subject.creditHours}</span>
+                      </div>
+                      <div className="flex flex-col">
+                        <span className="text-[10px] font-bold text-content-muted uppercase">Full Marks</span>
+                        <span className="text-xs font-bold text-content-main">{subject.fullMarks}</span>
+                      </div>
+                    </div>
 
                     <div className="grid grid-cols-3 gap-4 pt-6 border-t border-boundary-subtle">
                       <div className="text-center">
@@ -155,6 +167,26 @@ export default function SubjectsPage() {
               onChange={e => setFormData(f => ({ ...f, teacher: e.target.value }))}
               placeholder="e.g. Prof. Dr. John Doe"
             />
+          </div>
+          <div className="grid grid-cols-2 gap-4">
+            <div>
+              <label className="field-label">Credit Hours</label>
+              <input 
+                type="number"
+                className="w-full input-field"
+                value={formData.creditHours}
+                onChange={e => setFormData(f => ({ ...f, creditHours: parseInt(e.target.value) }))}
+              />
+            </div>
+            <div>
+              <label className="field-label">Full Marks</label>
+              <input 
+                type="number"
+                className="w-full input-field"
+                value={formData.fullMarks}
+                onChange={e => setFormData(f => ({ ...f, fullMarks: parseInt(e.target.value) }))}
+              />
+            </div>
           </div>
           <div className="grid grid-cols-2 gap-4">
             <div>
